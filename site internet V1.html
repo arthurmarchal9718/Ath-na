@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athéna</title> <!-- Le titre de la page -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #000;
+            color: #fff;
+            display: flex; /* Flexbox pour aligner les éléments */
+            align-items: center;
+            padding: 10px 20px;
+        }
+        .navbar span {
+            font-size: 24px; /* Taille du titre "Athéna" */
+            margin-right: 10px; /* Espacement entre le titre et le bouton */
+        }
+        .navbar button {
+            background: #4CAF50; /* Couleur verte vive */
+            border: 2px solid #fff; /* Bordure blanche */
+            border-radius: 50%;
+            font-size: 20px; /* Taille du symbole "+" */
+            width: 40px; /* Dimensions du bouton */
+            height: 40px;
+            cursor: pointer;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3); /* Relief visuel */
+        }
+        .feed {
+            margin-top: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: scroll;
+            height: calc(100vh - 60px);
+            scroll-snap-type: y mandatory;
+        }
+        .media {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            scroll-snap-align: start;
+        }
+        .media video, .media img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px;
+        }
+        /* Styles pour la modale */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .modal-content form {
+            margin: 0;
+        }
+        .close-btn {
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Barre de navigation -->
+    <div class="navbar">
+        <span>Athéna</span> <!-- Nom du site -->
+        <button onclick="openModal()">+</button>
+    </div>
+
+    <!-- Flux des médias -->
+    <div class="feed" id="feed">
+        <!-- Les vidéos et images téléchargées seront affichées ici dynamiquement -->
+    </div>
+
+    <!-- Modale pour la publication -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <h1>Publier un média</h1>
+            <form id="uploadForm" action="http://127.0.0.1:5000/upload" method="post" enctype="multipart/form-data">
+                <label for="media">Choisir un fichier (vidéo ou image) :</label>
+                <input type="file" id="media" name="media" accept="video/mp4,video/webm,video/ogg,image/jpeg,image/png,image/gif" required>
+                <br>
+                <button type="submit">Publier</button>
+            </form>
+            <button class="close-btn" onclick="closeModal()">Fermer</button>
+        </div>
+    </div>
+
+    <script>
+        const feed = document.getElementById('feed');
+        const uploadModal = document.getElementById('uploadModal');
+
+        // Ouvrir la modale
+        function openModal() {
+            uploadModal.classList.add('active');
+        }
+
+        // Fermer la modale
+        function closeModal() {
+            uploadModal.classList.remove('active');
+        }
+
+        // Charger dynamiquement les médias depuis le serveur
+        async function loadMedia() {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/media'); // URL du backend pour récupérer les médias
+                const mediaList = await response.json();
+
+                mediaList.forEach(media => {
+                    const mediaDiv = document.createElement('div');
+                    mediaDiv.className = 'media';
+
+                    if (media.type === 'video') {
+                        const video = document.createElement('video');
+                        video.src = `http://127.0.0.1:5000/media/${media.filename}`;
+                        video.controls = true;
+                        mediaDiv.appendChild(video);
+                    } else if (media.type === 'image') {
+                        const img = document.createElement('img');
+                        img.src = `http://127.0.0.1:5000/media/${media.filename}`;
+                        mediaDiv.appendChild(img);
+                    }
+                    feed.appendChild(mediaDiv);
+                });
+            } catch (error) {
+                console.error("Erreur lors du chargement des médias :", error);
+            }
+        }
+
+        // Charger les médias au démarrage
+        loadMedia();
+    </script>
+</body>
+</html>
